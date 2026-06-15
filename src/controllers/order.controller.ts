@@ -1,175 +1,273 @@
-import Order from "../models/Order";
+import { Request, Response } from "express";
 
+import Order from "../models/Order";
 import Cart from "../models/Cart";
 
 /*
-====================================
-CREATE ORDER
-====================================
+|--------------------------------------------------------------------------
+| Create Order
+|--------------------------------------------------------------------------
 */
 
-export const createOrder =
-async(
- req:any,
- res:any
-)=>{
+export const createOrder = async (
+  req: any,
+  res: Response
+) => {
+  try {
+    const {
+      shippingAddress,
+      city,
+      state,
+      postalCode,
+      paymentMethod,
+    } = req.body;
 
- try{
+    const cart = await Cart.findOne({
+      user: req.user._id,
+    }).populate("items.product");
 
-  const {
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Cart is empty",
+      });
+    }
 
-   shippingAddress,
+    const items = cart.items.map((item: any) => ({
+      product: item.product._id,
+      quantity: item.quantity,
+      price: item.product.price,
+    }));
 
-   city,
+    const totalAmount = cart.items.reduce(
+      (total: number, item: any) =>
+        total + item.product.price * item.quantity,
+      0
+    );
 
-   state,
+    const order = await Order.create({
+      user: req.user._id,
+      items,
+      shippingAddress,
+      city,
+      state,
+      postalCode,
+      totalAmount,
+      paymentMethod,
+      paymentStatus: "Pending",
+      orderStatus: "Pending",
+    });
 
-   postalCode,
+    /*
+    CLEAR CART AFTER ORDER
+    */
 
-   paymentMethod
+    cart.items = [];
+    await cart.save();
 
-  } = req.body;
+    return res.status(201).json({
+      success: true,
+      message: "Order placed successfully",
+      data: order,
+    });
 
-  /*
-  GET USER CART
-  */
-
-  const cart =
-  await Cart.findOne({
-
-   user:req.user._id
-
-  })
-  .populate(
-   "items.product"
-  );
-
-  /*
-  CHECK CART
-  */
-
-  if(
-   !cart ||
-
-   cart.items.length === 0
-  ){
-
-   return res
-   .status(400)
-   .json({
-
-    message:
-    "Cart is empty"
-
-   });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
+};
 
-  /*
-  CALCULATE TOTAL
-  */
+/*
+|--------------------------------------------------------------------------
+| Get My Orders
+|--------------------------------------------------------------------------
+*/
 
-  const totalAmount =
-  cart.items.reduce(
-
-   (
-    acc:number,
-    item:any
-   ) =>
-
-    acc +
-
-    (
-     item.product.price *
-     item.quantity
-    ),
-
-   0
-  );
-
-  /*
-  CREATE ORDER
-  */
-
-  const order =
-  await Order.create({
-
-   user:
-   req.user._id,
-
-   orderItems:
-   cart.items.map(
-    (item:any)=>({
-
-     product:
-     item.product._id,
-
-     quantity:
-     item.quantity,
-
-     price:
-     item.product.price
-
+export const getMyOrders = async (
+  req: any,
+  res: Response
+) => {
+  try {
+    const orders = await Order.find({
+      user: req.user._id,
     })
-   ),
+      .populate("items.product")
+      .sort({ createdAt: -1 });
 
-   shippingAddress:{
+    return res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders,
+    });
 
-    address:
-    shippingAddress,
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-    city,
+/*
+|--------------------------------------------------------------------------
+| Get Order By Id
+|--------------------------------------------------------------------------
+*/
 
-    state,
+export const getOrderById = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const order = await Order.findById(
+      req.params.id
+    )
+      .populate("user")
+      .populate("items.product");
 
-    postalCode
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
 
-   },
+    return res.status(200).json({
+      success: true,
+      data: order,
+    });
 
-   paymentMethod,
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-   totalAmount,
+/*
+|--------------------------------------------------------------------------
+| Admin Get All Orders
+|--------------------------------------------------------------------------
+*/
 
-   status:
-   "paid"
-  });
+export const getAllOrders = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const orders = await Order.find()
+      .populate("user")
+      .populate("items.product")
+      .sort({ createdAt: -1 });
 
-  /*
-  CLEAR CART
-  IMPORTANT
-  */
+    return res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders,
+    });
 
-  cart.items = [];
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-  await cart.save();
+/*
+|--------------------------------------------------------------------------
+| Update Order Status
+|--------------------------------------------------------------------------
+*/
 
-  /*
-  RESPONSE
-  */
+export const updateOrderStatus = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { orderStatus } = req.body;
 
-  res.status(201)
-  .json({
+    const order: any =
+      await Order.findById(
+        req.params.id
+      );
 
-   success:true,
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
 
-   message:
-   "Order placed successfully",
+    order.orderStatus =
+      orderStatus;
 
-   data:order
+    if (
+      orderStatus ===
+      "Delivered"
+    ) {
+      order.paymentStatus =
+        "Paid";
+    }
 
-  });
+    await order.save();
 
- }catch(error){
+    return res.status(200).json({
+      success: true,
+      message: "Order updated",
+      data: order,
+    });
 
-  console.log(
-   error
-  );
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-  res.status(500)
-  .json({
+/*
+|--------------------------------------------------------------------------
+| Cancel Order
+|--------------------------------------------------------------------------
+*/
 
-   message:
-   "Server Error"
+export const cancelOrder = async (
+  req: any,
+  res: Response
+) => {
+  try {
+    const order: any =
+      await Order.findOne({
+        _id: req.params.id,
+        user: req.user._id,
+      });
 
-  });
- }
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    order.orderStatus =
+      "Cancelled";
+
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Order cancelled",
+      data: order,
+    });
+
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
