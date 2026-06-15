@@ -24,6 +24,12 @@ import wishlistRoutes from "./routes/wishlist.routes";
 import orderRoutes from "./routes/order.routes";
 
 /*
+NEW PAYMENT ROUTE
+*/
+
+import paymentRoutes from "./routes/payment.routes";
+
+/*
 |--------------------------------------------------------------------------
 | Express App
 |--------------------------------------------------------------------------
@@ -141,6 +147,15 @@ app.use(
 app.use(
   "/api/orders",
   orderRoutes
+);
+
+/*
+RAZORPAY PAYMENT API
+*/
+
+app.use(
+  "/api/payment",
+  paymentRoutes
 );
 
 /*
