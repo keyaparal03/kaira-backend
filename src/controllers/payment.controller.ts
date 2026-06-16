@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
+import Razorpay from "razorpay";
 import crypto from "crypto";
-import razorpay from "../config/razorpay";
 
-/*
-|--------------------------------------------------------------------------
-| CREATE PAYMENT ORDER
-|--------------------------------------------------------------------------
-*/
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID as string,
+  key_secret: process.env.RAZORPAY_KEY_SECRET as string
+});
 
 export const createPaymentOrder = async (
   req: Request,
@@ -15,73 +14,39 @@ export const createPaymentOrder = async (
   try {
     const { amount } = req.body;
 
-    console.log("Incoming amount:", amount);
+    const order =
+      await razorpay.orders.create({
+        amount: amount * 100,
+        currency: "INR",
+        receipt: "receipt_" + Date.now()
+      });
 
-    /*
-    Razorpay expects paise
-    */
-
-    const options = {
-      amount: amount * 100,
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`
-    };
-
-    /*
-    Create order
-    */
-
-    const order = await razorpay.orders.create(
-      options
-    );
-
-    console.log("Razorpay order created:", order);
-
-    /*
-    IMPORTANT:
-    frontend expects payment.order.id
-    */
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      order
+      order,
+      key: process.env.RAZORPAY_KEY_ID
     });
 
   } catch (error: any) {
+    console.log(error);
 
-    console.log(
-      "RAZORPAY CREATE ERROR:",
-      error
-    );
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message
     });
   }
 };
 
-/*
-|--------------------------------------------------------------------------
-| VERIFY PAYMENT
-|--------------------------------------------------------------------------
-*/
-
 export const verifyPayment = async (
   req: Request,
   res: Response
 ) => {
   try {
-
     const {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature
     } = req.body;
-
-    /*
-    Generate signature
-    */
 
     const body =
       razorpay_order_id +
@@ -92,46 +57,29 @@ export const verifyPayment = async (
       crypto
         .createHmac(
           "sha256",
-          process.env.RAZORPAY_KEY_SECRET!
+          process.env.RAZORPAY_KEY_SECRET as string
         )
-        .update(body.toString())
+        .update(body)
         .digest("hex");
 
-    /*
-    Compare signature
-    */
-
-    const isValid =
-      expectedSignature ===
-      razorpay_signature;
-
-    if (!isValid) {
-
+    if (
+      expectedSignature !==
+      razorpay_signature
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Payment verification failed"
+        message:
+          "Payment verification failed"
       });
     }
 
-    console.log(
-      "Payment verified successfully"
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Payment verified"
+    return res.status(200).json({
+      success: true
     });
 
   } catch (error: any) {
-
-    console.log(
-      "VERIFY ERROR:",
-      error
-    );
-
-    res.status(500).json({
-      success: false,
-      message: error.message
+    return res.status(500).json({
+      success: false
     });
   }
 };
