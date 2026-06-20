@@ -15,17 +15,24 @@ async (
 
  try {
 
+  const image =
+    req.file
+    ? `/uploads/${req.file.filename}`
+    : "";
+
   const product =
-  await Product.create(
-   req.body
-  );
+  await Product.create({
+
+    ...req.body,
+
+    image
+  });
 
   res.status(201).json({
 
    success: true,
 
    data: product
-
   });
 
  } catch {
@@ -36,7 +43,6 @@ async (
 
    message:
    "Failed to create product"
-
   });
 
  }
@@ -224,10 +230,24 @@ async (
 
  try {
 
+  const updateData:
+  any = {
+    ...req.body
+  };
+
+  if (req.file) {
+
+    updateData.image =
+    `/uploads/${req.file.filename}`;
+  }
+
   const product =
   await Product.findByIdAndUpdate(
+
    req.params.id,
-   req.body,
+
+   updateData,
+
    {
     new: true
    }
@@ -238,7 +258,6 @@ async (
    success: true,
 
    data: product
-
   });
 
  } catch {
@@ -249,7 +268,6 @@ async (
 
    message:
    "Failed to update product"
-
   });
 
  }

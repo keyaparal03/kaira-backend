@@ -19,6 +19,9 @@ import {
 }
 from "../middleware/admin.middleware";
 
+import upload from
+"../middleware/upload.middleware";
+
 import {
   createProductValidator
 }
@@ -46,8 +49,12 @@ router.post(
   "/",
   protect,
   adminOnly,
+
+  upload.single("image"),   // added
+
   createProductValidator,
   validateRequest,
+
   createProduct
 );
 
@@ -55,6 +62,9 @@ router.put(
   "/:id",
   protect,
   adminOnly,
+
+  upload.single("image"),   // added
+
   updateProduct
 );
 
