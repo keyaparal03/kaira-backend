@@ -58,21 +58,22 @@ router.post(
   createProduct
 );
 
+/* UPDATE USING POST */
 router.post(
-  "/:id",
+  "/update/:id",
   protect,
   adminOnly,
-
-  upload.single("image"),   // added
-
+  upload.single("image"),
   updateProduct
 );
 
+/* DELETE USING POST */
 router.post(
-  "/:id",
+  "/delete/:id",
   protect,
   adminOnly,
   deleteProduct
 );
+
 
 export default router;
