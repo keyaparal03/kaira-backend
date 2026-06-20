@@ -7,7 +7,13 @@ exports.deleteProduct = exports.updateProduct = exports.getProductById = exports
 const Product_1 = __importDefault(require("../models/Product"));
 const createProduct = async (req, res) => {
     try {
-        const product = await Product_1.default.create(req.body);
+        const image = req.file
+            ? `/uploads/${req.file.filename}`
+            : "";
+        const product = await Product_1.default.create({
+            ...req.body,
+            image
+        });
         res.status(201).json({
             success: true,
             data: product
@@ -101,7 +107,14 @@ const getProductById = async (req, res) => {
 exports.getProductById = getProductById;
 const updateProduct = async (req, res) => {
     try {
-        const product = await Product_1.default.findByIdAndUpdate(req.params.id, req.body, {
+        const updateData = {
+            ...req.body
+        };
+        if (req.file) {
+            updateData.image =
+                `/uploads/${req.file.filename}`;
+        }
+        const product = await Product_1.default.findByIdAndUpdate(req.params.id, updateData, {
             new: true
         });
         res.json({
