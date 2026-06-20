@@ -14,22 +14,15 @@ dotenv.config();
 
 const app = express();
 
+
 // DATABASE
 connectDB();
 
-/*
-|--------------------------------------------------------------------------
-| CORS
-|--------------------------------------------------------------------------
-*/
 
+// CORS
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001"
-    ],
-
+    origin: "http://localhost:3001",
     credentials: true,
 
     methods: [
@@ -48,46 +41,26 @@ app.use(
   })
 );
 
-/*
-|--------------------------------------------------------------------------
-| BODY PARSER
-|--------------------------------------------------------------------------
-*/
 
+// BODY PARSER
 app.use(express.json());
-app.use(
-  express.urlencoded({
-    extended: true
-  })
-);
+app.use(express.urlencoded({ extended: true }));
 
-/*
-|--------------------------------------------------------------------------
-| STATIC IMAGE
-|--------------------------------------------------------------------------
-*/
 
+// STATIC IMAGE FOLDER
 app.use(
   "/uploads",
   express.static("uploads")
 );
 
-/*
-|--------------------------------------------------------------------------
-| TEST
-|--------------------------------------------------------------------------
-*/
 
+// TEST ROUTE
 app.get("/", (req, res) => {
   res.send("KAIRA API Running");
 });
 
-/*
-|--------------------------------------------------------------------------
-| ROUTES
-|--------------------------------------------------------------------------
-*/
 
+// API ROUTES
 app.use(
   "/api/auth",
   authRoutes
@@ -108,17 +81,21 @@ app.use(
   userRoutes
 );
 
-/*
-|--------------------------------------------------------------------------
-| SERVER
-|--------------------------------------------------------------------------
-*/
 
+// 404
+// app.use("*", (req, res) => {
+//   res.status(404).json({
+//     success: false,
+//     message: "API Not Found"
+//   });
+// });
+
+
+// SERVER
 const PORT =
   process.env.PORT || 3500;
 
 app.listen(PORT, () => {
-
   console.log(
     `Server running on ${PORT}`
   );

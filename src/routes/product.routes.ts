@@ -58,7 +58,7 @@ router.post(
   createProduct
 );
 
-router.put(
+router.post(
   "/:id",
   protect,
   adminOnly,
@@ -68,7 +68,7 @@ router.put(
   updateProduct
 );
 
-router.delete(
+router.post(
   "/:id",
   protect,
   adminOnly,
