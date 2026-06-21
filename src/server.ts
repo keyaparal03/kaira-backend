@@ -1,6 +1,10 @@
-import express from "express";
 import cors from "cors";
+
 import dotenv from "dotenv";
+
+dotenv.config();
+
+import express from "express";
 
 import connectDB from "./config/db";
 
@@ -10,7 +14,11 @@ import productRoutes from "./routes/product.routes";
 import categoryRoutes from "./routes/category.routes";
 import userRoutes from "./routes/auth.routes";
 
-dotenv.config();
+import cartRoutes from "./routes/cart.routes";
+import orderRoutes from "./routes/order.routes";
+import paymentRoutes from "./routes/payment.routes";
+
+
 
 const app = express();
 
@@ -22,7 +30,10 @@ connectDB();
 // CORS
 app.use(
   cors({
-    origin: "http://localhost:3001",
+    origin: [
+      "http://localhost:3001",
+      "http://localhost:3000",
+    ],
     credentials: true,
 
     methods: [
@@ -80,6 +91,25 @@ app.use(
   "/api/users",
   userRoutes
 );
+
+app.use(
+  "/api/cart",
+  cartRoutes
+);
+
+app.use(
+  "/api/orders",
+  orderRoutes
+);
+
+app.use(
+  "/api/payment",
+  paymentRoutes
+);
+// app.use(
+//   "/api/checkout",
+//   checkoutRoutes
+// );
 
 
 // 404
