@@ -1,28 +1,29 @@
 import express from "express";
 
 import {
- register,
- login,
- refreshToken
-}
-from "../controllers/auth.controller";
+  register,
+  login,
+  refreshToken,
+  getCurrentUser
+} from "../controllers/auth.controller";
 
-const router =
-express.Router();
+import {
+  protect
+} from "../middleware/auth.middleware";
 
-router.post(
- "/register",
- register
-);
+const router = express.Router();
 
-router.post(
- "/login",
- login
-);
+router.post("/register", register);
 
-router.post(
- "/refresh-token",
- refreshToken
+router.post("/login", login);
+
+router.post("/refresh-token", refreshToken);
+
+/* ADD THIS */
+router.get(
+  "/me",
+  protect,
+  getCurrentUser
 );
 
 export default router;
