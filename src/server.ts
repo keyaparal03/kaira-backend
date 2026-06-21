@@ -15,13 +15,11 @@ import categoryRoutes from "./routes/category.routes";
 import userRoutes from "./routes/auth.routes";
 
 import cartRoutes from "./routes/cart.routes";
+import wishlistRoutes from "./routes/wishlist.routes";
 import orderRoutes from "./routes/order.routes";
 import paymentRoutes from "./routes/payment.routes";
 
-
-
 const app = express();
-
 
 // DATABASE
 connectDB();
@@ -95,6 +93,11 @@ app.use(
 app.use(
   "/api/cart",
   cartRoutes
+);
+
+app.use(
+  "/api/wishlist",
+  wishlistRoutes
 );
 
 app.use(
