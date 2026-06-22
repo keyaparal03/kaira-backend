@@ -18,7 +18,7 @@ import cartRoutes from "./routes/cart.routes";
 import wishlistRoutes from "./routes/wishlist.routes";
 import orderRoutes from "./routes/order.routes";
 import paymentRoutes from "./routes/payment.routes";
-
+import contactRoutes from "./routes/contact.routes";
 const app = express();
 
 // DATABASE
@@ -108,6 +108,11 @@ app.use(
 app.use(
   "/api/payment",
   paymentRoutes
+);
+
+app.use(
+  "/api/contact",
+  contactRoutes
 );
 // app.use(
 //   "/api/checkout",
